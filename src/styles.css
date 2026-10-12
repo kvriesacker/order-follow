@@ -1,0 +1,194 @@
+/* Pizza order follow page. Same look as the pizza queue staff app. */
+:root {
+  --tomato: #c8102e;
+  --tomato-dark: #9e0c24;
+  --basil: #1f7a3a;
+  --crust: #e8a33d;
+  --cream: #fff8ee;
+  --ink: #2a1f1a;
+  --muted: #7a6a60;
+  --card: #ffffff;
+  --line: #ecdccb;
+  --radius: 14px;
+  color-scheme: light;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: var(--ink);
+  background: var(--cream);
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+h1,
+h2 {
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+}
+h1 {
+  font-size: 1.6rem;
+}
+h2 {
+  font-size: 1.15rem;
+}
+a {
+  color: inherit;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.primary {
+  background: var(--tomato);
+  border-color: var(--tomato);
+  color: #fff;
+}
+
+.pill {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: #f3ebe1;
+  color: var(--muted);
+}
+.pill.online {
+  background: #dff3e5;
+  color: var(--basil);
+}
+.pill.offline {
+  background: #fde3e7;
+  color: var(--tomato);
+}
+
+/* A customer following their order on their phone */
+.track {
+  min-height: 100vh;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.track-shop {
+  font-weight: 800;
+  color: var(--tomato);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.track-label {
+  margin-top: 1rem;
+  color: var(--muted);
+}
+.track-number {
+  font-size: 6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.track.is-ready .track-number {
+  color: var(--tomato);
+}
+.track-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.track-pizzas {
+  color: var(--muted);
+}
+.track-eta {
+  margin-top: 1rem;
+  font-size: 1.4rem;
+}
+.track-eta span {
+  display: block;
+  font-size: 1rem;
+  color: var(--muted);
+}
+.track-big {
+  margin-top: 1rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.track-steps {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+.track-steps li {
+  padding-top: 0.6rem;
+  border-top: 6px solid var(--line);
+  color: var(--muted);
+}
+.track-steps li.done {
+  border-color: var(--tomato);
+  color: inherit;
+  font-weight: 700;
+}
+.track-foot {
+  margin-top: auto;
+  padding-top: 2rem;
+  font-size: 0.85rem;
+}
+.track p {
+  margin: 0;
+}
+.track-number {
+  margin: 0.3rem 0 0.6rem;
+}
+
+/* Order alerts for the customer */
+.track-alert {
+  margin: 0.8rem 0 0;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: var(--crust);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.track-alerts {
+  margin-top: 1rem;
+}
+.track-alerts p {
+  margin: 0;
+}
+
