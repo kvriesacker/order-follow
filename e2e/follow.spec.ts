@@ -62,7 +62,13 @@ test('offers alerts, and says when they are on', async ({ page, context }) => {
   const id = newOrderId();
   await saveOrder(id, anna);
   await page.goto(orderPage(id));
-  await expect(page.getByRole('button', { name: 'Verwittig me als ze in de oven zit en klaar is' })).toBeVisible();
+  await expect(page.locator('.track-number')).toHaveText('7');
+  // Some browsers (like the one on the deploy server) block alerts until asked; then it says so.
+  if ((await page.evaluate(() => Notification.permission)) === 'default') {
+    await expect(page.getByRole('button', { name: 'Verwittig me als ze in de oven zit en klaar is' })).toBeVisible();
+  } else {
+    await expect(page.getByText(/Meldingen zijn voor deze site geblokkeerd/)).toBeVisible();
+  }
 
   await context.grantPermissions(['notifications']);
   await page.reload();
