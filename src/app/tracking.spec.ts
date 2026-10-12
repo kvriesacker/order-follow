@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OrderTrack, partReady, trackAlert } from './tracking';
+import { OrderTrack, partReady, sponsorAt, trackAlert } from './tracking';
 
 const base: OrderTrack = { shop: 'Napoli', number: 7, customer: 'Anna', pizzas: '1× Margherita', status: 'new', stage: 'ordered' };
 const at = (patch: Partial<OrderTrack>): OrderTrack => ({ ...base, ...patch });
@@ -36,5 +36,16 @@ describe('trackAlert', () => {
 
   it('skips straight to ready when baking and calling happen between two updates', () => {
     expect(trackAlert(at({ stage: 'preparing' }), at({ status: 'ready-for-customer', stage: 'ready' }))).toBe('ready');
+  });
+});
+
+describe('sponsorAt', () => {
+  it('shows the sponsors in turn, the same one everywhere at the same moment', () => {
+    const t = at({ sponsors: [{ name: 'A', message: '' }, { name: 'B', message: 'hi' }], sponsorSeconds: 5 });
+    expect(sponsorAt(t, 0)?.name).toBe('A');
+    expect(sponsorAt(t, 4999)?.name).toBe('A');
+    expect(sponsorAt(t, 5000)?.name).toBe('B');
+    expect(sponsorAt(t, 10000)?.name).toBe('A');
+    expect(sponsorAt(at({}), 0)).toBeNull();
   });
 });

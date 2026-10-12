@@ -87,6 +87,24 @@ test('shows each pizza, and says when part of a split order is ready', async ({ 
   await expect(items).toHaveText([/Afgehaald/, /Klaar om af te halen/, /Klaar om af te halen/]);
 });
 
+test("shows the shop's sponsors in turn", async ({ page }) => {
+  const id = newOrderId();
+  await saveOrder(id, anna);
+  await page.goto(orderPage(id));
+  await expect(page.locator('.track-number')).toHaveText('7');
+  await expect(page.locator('.sponsor-banner')).toHaveCount(0);
+  await saveOrder(id, {
+    ...anna,
+    sponsors: [{ name: 'Bakkerij Jansens', message: 'Vers brood elke dag' }, { name: 'Garage Peeters', message: '' }],
+    sponsorSeconds: 3,
+  });
+  const banner = page.locator('.sponsor-banner');
+  await expect(banner).toContainText('Met dank aan');
+  const first = await banner.locator('.sponsor-name').textContent();
+  expect(['Bakkerij Jansens', 'Garage Peeters']).toContain(first);
+  await expect(banner.locator('.sponsor-name')).not.toHaveText(first!, { timeout: 5000 });
+});
+
 test('speaks English when the shop does', async ({ page }) => {
   const id = newOrderId();
   await saveOrder(id, { ...anna, lang: 'en', status: 'cancelled' });

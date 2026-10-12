@@ -31,6 +31,19 @@ export interface OrderTrack {
   eta?: number;
   /** The shop's language, which this page speaks (older versions don't send it). */
   lang?: 'nl' | 'en';
+  /** The shop's sponsors, shown in turn like on its customer screens; absent without any. */
+  sponsors?: { name: string; message: string }[];
+  /** Seconds each sponsor stays before the next one. */
+  sponsorSeconds?: number;
+}
+
+/** The sponsor to show at a moment: every screen and phone shows the same one, by the clock. */
+export function sponsorAt(t: OrderTrack, now: number): { name: string; message: string; turn: number } | null {
+  const sponsors = t.sponsors ?? [];
+  if (!sponsors.length) return null;
+  const seconds = t.sponsorSeconds && t.sponsorSeconds >= 3 ? t.sponsorSeconds : 10;
+  const turn = Math.floor(now / (seconds * 1000));
+  return { ...sponsors[turn % sponsors.length], turn };
 }
 
 export interface TrackPizza {

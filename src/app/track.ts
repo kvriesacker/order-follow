@@ -1,8 +1,8 @@
-import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from './firebase';
 import {
-  DISPLAY_STAGES, DisplayStage, OrderStatus, OrderTrack, TrackAlert, TrackPizza, partReady, trackAlert, trackCrypto,
+  DISPLAY_STAGES, DisplayStage, OrderStatus, OrderTrack, TrackAlert, TrackPizza, partReady, sponsorAt, trackAlert, trackCrypto,
   trackDocId,
 } from './tracking';
 import { T, clockTime, lang, minutesUntil, t } from './i18n/i18n';
@@ -141,6 +141,16 @@ export function pizzaStep(p: TrackPizza, status: OrderStatus): string {
             }
           </div>
         }
+        <!-- One sponsor at a time; a new one is a new banner, so it fades in. -->
+        @for (s of sponsor(); track s.turn) {
+          <aside class="sponsor-banner" [attr.aria-label]="'Sponsors' | t">
+            <span class="sponsor-thanks">{{ 'With thanks to' | t }}</span>
+            <strong class="sponsor-name">{{ s.name }}</strong>
+            @if (s.message) {
+              <span class="sponsor-message">{{ s.message }}</span>
+            }
+          </aside>
+        }
         <p class="track-foot muted">
           {{ 'This page updates by itself.' | t }}
           @if (!online()) {
@@ -166,6 +176,12 @@ export class Track {
   protected online = signal(false);
   protected slow = signal(false);
   protected steps = trackSteps;
+  private tick = signal(Date.now());
+  protected sponsor = computed(() => {
+    const o = this.order();
+    const s = o ? sponsorAt(o, this.tick()) : null;
+    return s ? [s] : [];
+  });
   protected partReady = (o: OrderTrack) => partReady(o) > 0;
   protected pizzaStep = pizzaStep;
   protected pizzaClass = (p: TrackPizza) => (p.handed ? 'handed' : (p.stage ?? ''));
@@ -184,9 +200,11 @@ export class Track {
 
   constructor() {
     const timer = setInterval(() => this.now.set(Date.now()), 15000);
+    const tick = setInterval(() => this.tick.set(Date.now()), 1000);
     const slow = setTimeout(() => this.slow.set(true), 8000);
     inject(DestroyRef).onDestroy(() => {
       clearInterval(timer);
+      clearInterval(tick);
       clearTimeout(slow);
       this.stop?.();
     });

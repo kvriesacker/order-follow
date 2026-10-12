@@ -234,6 +234,38 @@ a {
   opacity: 0.55;
 }
 
+/* The shop's sponsors, one at a time */
+.sponsor-banner {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  animation: sponsor-in 0.6s ease-out;
+}
+.sponsor-thanks {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.sponsor-name {
+  font-size: 1.2rem;
+}
+@keyframes sponsor-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-banner {
+    animation: none;
+  }
+}
+
 /* Order alerts for the customer */
 .track-alert {
   margin: 0.8rem 0 0;

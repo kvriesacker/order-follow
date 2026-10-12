@@ -31,6 +31,8 @@ export const NL: Record<string, string> = {
   'Part of your order is ready! Collect it at the counter.':
     'Een deel van je bestelling is klaar! Haal het op aan de balie.',
   'Picked up': 'Afgehaald',
+  Sponsors: 'Sponsors',
+  'With thanks to': 'Met dank aan',
   'Order {n} is in the oven': 'Bestelling {n} zit in de oven',
   'Please collect it at the counter.': 'Haal ze op aan de balie.',
   'Ready around {time}.': 'Klaar rond {time}.',
