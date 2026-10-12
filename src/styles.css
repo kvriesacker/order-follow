@@ -149,7 +149,7 @@ a {
   padding: 0;
   margin: 1.5rem 0 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.3rem;
   font-size: 0.8rem;
 }
@@ -157,6 +157,15 @@ a {
   padding-top: 0.6rem;
   border-top: 6px solid var(--line);
   color: var(--muted);
+}
+.track-steps li small {
+  display: block;
+  font-weight: 400;
+}
+/* Some of the order's pizzas got this far, not all yet. */
+.track-steps li.part {
+  border-image: linear-gradient(90deg, var(--tomato) 50%, var(--line) 50%) 1;
+  color: inherit;
 }
 .track-steps li.done {
   border-color: var(--tomato);

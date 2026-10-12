@@ -1,8 +1,10 @@
 /** Dutch for every text on the page. The texts are written in English in the code. */
 export const NL: Record<string, string> = {
   Ordered: 'Besteld',
-  'Being made': 'In de maak',
+  'Being prepared': 'Wordt belegd',
+  'In the oven': 'In de oven',
   Baked: 'Gebakken',
+  '{n} of {total}': '{n} van {total}',
   'Ready to collect': 'Klaar om af te halen',
   'Your order': 'Je bestelling',
   'Ready! Please collect it at the counter.': 'Klaar! Haal je bestelling op aan de balie.',

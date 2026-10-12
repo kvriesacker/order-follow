@@ -18,6 +18,11 @@ describe('trackAlert', () => {
     expect(trackAlert(null, at({ status: 'ready-for-customer', stage: 'ready' }))).toBeNull();
   });
 
+  it('alerts for the oven once, even when the first pizza is baked between two updates', () => {
+    expect(trackAlert(at({ stage: 'preparing' }), at({ status: 'in-progress', stage: 'baked' }))).toBe('baking');
+    expect(trackAlert(at({ stage: 'baking' }), at({ status: 'ready', stage: 'baked' }))).toBeNull();
+  });
+
   it('skips straight to ready when baking and calling happen between two updates', () => {
     expect(trackAlert(at({ stage: 'preparing' }), at({ status: 'ready-for-customer', stage: 'ready' }))).toBe('ready');
   });

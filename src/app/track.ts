@@ -1,16 +1,38 @@
 import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from './firebase';
-import { OrderTrack, TrackAlert, trackAlert, trackCrypto, trackDocId } from './tracking';
+import {
+  DISPLAY_STAGES, DisplayStage, OrderStatus, OrderTrack, TrackAlert, trackAlert, trackCrypto, trackDocId,
+} from './tracking';
 import { T, clockTime, lang, minutesUntil, t } from './i18n/i18n';
 
 /** Labels are texts in the Dutch dictionary; the template translates them. */
-const STEPS = [
-  { label: 'Ordered', done: ['new', 'in-progress', 'ready', 'ready-for-customer', 'collected'] },
-  { label: 'Being made', done: ['in-progress', 'ready', 'ready-for-customer', 'collected'] },
-  { label: 'Baked', done: ['ready', 'ready-for-customer', 'collected'] },
-  { label: 'Ready to collect', done: ['ready-for-customer', 'collected'] },
+const STEPS: { stage: DisplayStage; label: string; done: OrderStatus[] }[] = [
+  { stage: 'ordered', label: 'Ordered', done: ['new', 'in-progress', 'ready', 'ready-for-customer', 'collected'] },
+  { stage: 'preparing', label: 'Being prepared', done: ['in-progress', 'ready', 'ready-for-customer', 'collected'] },
+  { stage: 'baking', label: 'In the oven', done: ['ready', 'ready-for-customer', 'collected'] },
+  { stage: 'baked', label: 'Baked', done: ['ready', 'ready-for-customer', 'collected'] },
+  { stage: 'ready', label: 'Ready to collect', done: ['ready-for-customer', 'collected'] },
 ];
+
+/**
+ * How far the order got at each step. With the pizza counts, a step is done once every pizza
+ * reached it, and partly done ("1 of 3") while the order is split; older shop versions only send
+ * the order's status.
+ */
+export function trackSteps(o: OrderTrack): { label: string; done: boolean; part: { n: number; total: number } | null }[] {
+  const counts = o.stages;
+  const total = counts ? DISPLAY_STAGES.reduce((n, s) => n + (counts[s] ?? 0), 0) : 0;
+  const finished = o.status === 'ready-for-customer' || o.status === 'collected';
+  return STEPS.map((step, i) => {
+    if (!counts || !total || finished) {
+      const done = step.done.includes(o.status) || (step.stage === 'baking' && o.stage === 'baking');
+      return { label: step.label, done, part: null };
+    }
+    const n = DISPLAY_STAGES.slice(i).reduce((sum, s) => sum + (counts[s] ?? 0), 0);
+    return { label: step.label, done: n === total, part: n > 0 && n < total ? { n, total } : null };
+  });
+}
 
 /**
  * A customer following their own order on their phone, opened from the QR code on the shop's
@@ -56,8 +78,13 @@ const STEPS = [
 
         @if (o.status !== 'cancelled') {
           <ol class="track-steps">
-            @for (s of steps; track s.label) {
-              <li [class.done]="s.done.includes(o.status)">{{ s.label | t }}</li>
+            @for (s of steps(o); track s.label) {
+              <li [class.done]="s.done" [class.part]="s.part">
+                {{ s.label | t }}
+                @if (s.part) {
+                  <small>{{ '{n} of {total}' | t: s.part }}</small>
+                }
+              </li>
             }
           </ol>
         }
@@ -115,7 +142,7 @@ export class Track {
   protected order = signal<OrderTrack | null>(null);
   protected online = signal(false);
   protected slow = signal(false);
-  protected steps = STEPS;
+  protected steps = trackSteps;
   protected clock = clockTime;
   private now = signal(Date.now());
   protected until = (t: number) => minutesUntil(t, this.now());

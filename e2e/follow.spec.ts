@@ -9,6 +9,7 @@ const anna: OrderTrack = {
   pizzas: '2× Margherita, 1× Funghi',
   status: 'new',
   stage: 'ordered',
+  stages: { ordered: 3 },
   eta: Date.now() + 20 * 60000,
   lang: 'nl',
 };
@@ -27,14 +28,19 @@ test('follows the order live, in the shop language, until it is ready', async ({
   await expect(page).toHaveTitle('Bestelling 7 · Napoli');
   await expect(page.locator('html')).toHaveAttribute('lang', 'nl');
 
-  await saveOrder(id, { ...anna, status: 'in-progress', stage: 'baking' });
+  // One of the three pizzas goes in the oven: that step is partly done.
+  await saveOrder(id, { ...anna, status: 'in-progress', stage: 'baking', stages: { preparing: 2, baking: 1 } });
   await expect(page.locator('.track-alert')).toHaveText('Je pizza zit in de oven!');
-  await expect(page.locator('.track-steps li.done')).toHaveText(['Besteld', 'In de maak']);
+  await expect(page.locator('.track-steps li.done')).toHaveText(['Besteld', 'Wordt belegd']);
+  await expect(page.locator('.track-steps li.part')).toHaveText([/In de oven\s*1 van 3/]);
 
-  await saveOrder(id, { ...anna, status: 'ready-for-customer', stage: 'ready', eta: undefined });
+  await saveOrder(id, { ...anna, status: 'ready', stage: 'baked', stages: { baked: 3 } });
+  await expect(page.locator('.track-steps li.done')).toHaveText(['Besteld', 'Wordt belegd', 'In de oven', 'Gebakken']);
+
+  await saveOrder(id, { ...anna, status: 'ready-for-customer', stage: 'ready', stages: { ready: 3 }, eta: undefined });
   await expect(track).toHaveClass(/is-ready/);
   await expect(track).toContainText('Klaar! Haal je bestelling op aan de balie.');
-  await expect(page.locator('.track-steps li.done')).toHaveCount(4);
+  await expect(page.locator('.track-steps li.done')).toHaveCount(5);
 
   await saveOrder(id, { ...anna, status: 'collected', stage: null, eta: undefined });
   await expect(track).toContainText('Afgehaald. Smakelijk!');

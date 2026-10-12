@@ -2,8 +2,9 @@ import { QueueCrypto } from './queue-crypto';
 
 /** Where an order is, as the pizza queue app (order-queue) saves it. */
 export type OrderStatus = 'new' | 'in-progress' | 'ready' | 'ready-for-customer' | 'collected' | 'cancelled';
-/** The block of the shop's customer screen the order is in. */
-export type DisplayStage = 'ordered' | 'preparing' | 'baking' | 'ready';
+/** The blocks of the shop's customer screen, in order: each pizza is in one of them. */
+export type DisplayStage = 'ordered' | 'preparing' | 'baking' | 'baked' | 'ready';
+export const DISPLAY_STAGES: DisplayStage[] = ['ordered', 'preparing', 'baking', 'baked', 'ready'];
 
 /**
  * What a customer sees when following their own order. The pizza queue app stores it per
@@ -17,8 +18,13 @@ export interface OrderTrack {
   customer: string;
   pizzas: string;
   status: OrderStatus;
-  /** Which block of the customer display the order is in (older versions don't send it). */
+  /**
+   * The furthest block of the customer display the order's pizzas not yet called reached
+   * (older versions don't send it).
+   */
   stage?: DisplayStage | null;
+  /** How many pizzas are in each block, as an order can be split (older versions don't send it). */
+  stages?: Partial<Record<DisplayStage, number>>;
   /** Estimated ready time, cut to the minute; absent once the order is ready. */
   eta?: number;
   /** The shop's language, which this page speaks (older versions don't send it). */
@@ -43,8 +49,8 @@ export type TrackAlert = 'baking' | 'ready';
 export function trackAlert(before: OrderTrack | null, after: OrderTrack): TrackAlert | null {
   if (!before) return null;
   if (after.status === 'ready-for-customer' && before.status !== 'ready-for-customer') return 'ready';
-  if (after.stage === 'baking' && before.stage !== 'baking' && before.status !== 'ready-for-customer') {
-    return 'baking';
-  }
+  const rank = (t: OrderTrack) => (t.stage ? DISPLAY_STAGES.indexOf(t.stage) : -1);
+  const oven = DISPLAY_STAGES.indexOf('baking');
+  if (rank(after) >= oven && rank(before) < oven && before.status !== 'ready-for-customer') return 'baking';
   return null;
 }
