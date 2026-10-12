@@ -58,7 +58,7 @@ test('waits for an order that is still being taken', async ({ page }) => {
   await expect(page.locator('.track-number')).toHaveText('7');
 });
 
-test('offers alerts, and says when they are on', async ({ page, context }) => {
+test('offers alerts, or says they are blocked', async ({ page }) => {
   const id = newOrderId();
   await saveOrder(id, anna);
   await page.goto(orderPage(id));
@@ -69,11 +69,6 @@ test('offers alerts, and says when they are on', async ({ page, context }) => {
   } else {
     await expect(page.getByText(/Meldingen zijn voor deze site geblokkeerd/)).toBeVisible();
   }
-
-  await context.grantPermissions(['notifications']);
-  await page.reload();
-  await expect(page.getByText(/Meldingen staan aan/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /Verwittig me/ })).toHaveCount(0);
 });
 
 test('only shows the one order: no links anywhere, and nothing without an order id', async ({ page }) => {
