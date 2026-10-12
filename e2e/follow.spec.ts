@@ -46,6 +46,47 @@ test('follows the order live, in the shop language, until it is ready', async ({
   await expect(track).toContainText('Afgehaald. Smakelijk!');
 });
 
+test('shows each pizza, and says when part of a split order is ready', async ({ page }) => {
+  const id = newOrderId();
+  const pizza = (name: string, stage: OrderTrack['stage'], handed?: boolean) => ({ name, stage, ...(handed ? { handed } : {}) });
+  const split: OrderTrack = {
+    ...anna,
+    status: 'in-progress',
+    stage: 'baking',
+    stages: { baking: 2, ready: 1 },
+    items: [pizza('Margherita', 'ready'), pizza('Margherita', 'baking'), pizza('Funghi', 'baking')],
+  };
+  await saveOrder(id, { ...split, stages: { baking: 3 }, items: split.items!.map((p) => ({ ...p, stage: 'baking' })) });
+  await page.goto(orderPage(id));
+  const items = page.locator('.track-items li');
+  await expect(items).toHaveText([/Margherita\s*In de oven/, /Margherita\s*In de oven/, /Funghi\s*In de oven/]);
+  await expect(page.locator('.track-part')).toHaveCount(0);
+
+  // One Margherita is ready at the counter: say so in yellow, and show which one.
+  await saveOrder(id, split);
+  await expect(page.locator('.track-part')).toHaveText('Een deel van je bestelling is klaar! Haal het op aan de balie.');
+  await expect(page.locator('.track-part')).toHaveCSS('background-color', 'rgb(242, 184, 75)');
+  await expect(items).toHaveText([/Margherita\s*Klaar om af te halen/, /Margherita\s*In de oven/, /Funghi\s*In de oven/]);
+  await expect(page.locator('.track')).not.toHaveClass(/is-ready/);
+
+  // Picked up, the rest still in the oven: no more "ready" message.
+  await saveOrder(id, { ...split, items: [pizza('Margherita', 'ready', true), ...split.items!.slice(1)] });
+  await expect(items.first()).toHaveText(/Margherita\s*Afgehaald/);
+  await expect(page.locator('.track-part')).toHaveCount(0);
+
+  // The rest is ready: the whole order is ready to collect.
+  await saveOrder(id, {
+    ...split,
+    status: 'ready-for-customer',
+    stage: 'ready',
+    stages: { ready: 3 },
+    eta: undefined,
+    items: [pizza('Margherita', 'ready', true), pizza('Margherita', 'ready'), pizza('Funghi', 'ready')],
+  });
+  await expect(page.locator('.track')).toHaveClass(/is-ready/);
+  await expect(items).toHaveText([/Afgehaald/, /Klaar om af te halen/, /Klaar om af te halen/]);
+});
+
 test('speaks English when the shop does', async ({ page }) => {
   const id = newOrderId();
   await saveOrder(id, { ...anna, lang: 'en', status: 'cancelled' });

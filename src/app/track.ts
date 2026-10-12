@@ -2,7 +2,8 @@ import { Component, DestroyRef, effect, inject, input, signal } from '@angular/c
 import { doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from './firebase';
 import {
-  DISPLAY_STAGES, DisplayStage, OrderStatus, OrderTrack, TrackAlert, trackAlert, trackCrypto, trackDocId,
+  DISPLAY_STAGES, DisplayStage, OrderStatus, OrderTrack, TrackAlert, TrackPizza, partReady, trackAlert, trackCrypto,
+  trackDocId,
 } from './tracking';
 import { T, clockTime, lang, minutesUntil, t } from './i18n/i18n';
 
@@ -34,6 +35,13 @@ export function trackSteps(o: OrderTrack): { label: string; done: boolean; part:
   });
 }
 
+/** What one pizza's line says: its step, ready to collect, or already picked up. */
+export function pizzaStep(p: TrackPizza, status: OrderStatus): string {
+  if (p.handed || status === 'collected') return 'Picked up';
+  const step = STEPS.find((s) => s.stage === p.stage);
+  return step?.label ?? 'Ordered';
+}
+
 /**
  * A customer following their own order on their phone, opened from the QR code on the shop's
  * order screen. It only knows this one order: nothing here leads to the shop's queue.
@@ -63,6 +71,11 @@ export function trackSteps(o: OrderTrack): { label: string; done: boolean; part:
             <p class="track-big">{{ 'This order was cancelled. Please ask at the counter.' | t }}</p>
           }
           @default {
+            @if (partReady(o)) {
+              <p class="track-big track-part" role="status">
+                {{ 'Part of your order is ready! Collect it at the counter.' | t }}
+              </p>
+            }
             @if (o.eta) {
               <p class="track-eta">
                 {{ 'Ready around' | t }} <strong>{{ clock(o.eta) }}</strong>
@@ -87,6 +100,16 @@ export function trackSteps(o: OrderTrack): { label: string; done: boolean; part:
               </li>
             }
           </ol>
+        }
+        @if (o.items?.length && o.status !== 'cancelled') {
+          <ul class="track-items">
+            @for (p of o.items; track $index) {
+              <li [class]="pizzaClass(p)">
+                <span class="track-item-name">{{ p.name }}</span>
+                <span class="track-item-step">{{ pizzaStep(p, o.status) | t }}</span>
+              </li>
+            }
+          </ul>
         }
         @if (o.status !== 'ready-for-customer' && o.status !== 'collected' && o.status !== 'cancelled') {
           <div class="track-alerts">
@@ -143,6 +166,9 @@ export class Track {
   protected online = signal(false);
   protected slow = signal(false);
   protected steps = trackSteps;
+  protected partReady = (o: OrderTrack) => partReady(o) > 0;
+  protected pizzaStep = pizzaStep;
+  protected pizzaClass = (p: TrackPizza) => (p.handed ? 'handed' : (p.stage ?? ''));
   protected clock = clockTime;
   private now = signal(Date.now());
   protected until = (t: number) => minutesUntil(t, this.now());
@@ -192,15 +218,18 @@ export class Track {
 
   private tell(alert: TrackAlert, track: OrderTrack) {
     this.alert.set(alert);
-    navigator.vibrate?.(alert === 'ready' ? [300, 100, 300, 100, 300] : [200]);
-    this.beep(alert === 'ready' ? 2 : 1);
+    const ready = alert !== 'baking';
+    navigator.vibrate?.(ready ? [300, 100, 300, 100, 300] : [200]);
+    this.beep(ready ? 2 : 1);
     if (this.permission() !== 'granted') return;
     const title =
       alert === 'ready'
         ? t('Order {n} is ready!', { n: track.number })
-        : t('Order {n} is in the oven', { n: track.number });
+        : alert === 'part-ready'
+          ? t('Part of order {n} is ready!', { n: track.number })
+          : t('Order {n} is in the oven', { n: track.number });
     const body =
-      alert === 'ready'
+      ready
         ? t('Please collect it at the counter.')
         : track.eta
           ? t('Ready around {time}.', { time: clockTime(track.eta) })

@@ -27,6 +27,10 @@ export const NL: Record<string, string> = {
   "Your order is still being taken. It shows up here as soon as it's sent to the kitchen.":
     'Je bestelling wordt nog opgenomen. Ze verschijnt hier zodra ze naar de keuken gaat.',
   'Order {n} is ready!': 'Bestelling {n} is klaar!',
+  'Part of order {n} is ready!': 'Een deel van bestelling {n} is klaar!',
+  'Part of your order is ready! Collect it at the counter.':
+    'Een deel van je bestelling is klaar! Haal het op aan de balie.',
+  'Picked up': 'Afgehaald',
   'Order {n} is in the oven': 'Bestelling {n} zit in de oven',
   'Please collect it at the counter.': 'Haal ze op aan de balie.',
   'Ready around {time}.': 'Klaar rond {time}.',

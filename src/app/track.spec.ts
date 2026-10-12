@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { trackSteps } from './track';
+import { pizzaStep, trackSteps } from './track';
 import { OrderTrack } from './tracking';
 
 const base: OrderTrack = { shop: 'Napoli', number: 7, customer: 'Anna', pizzas: '3× Margherita', status: 'in-progress' };
@@ -26,5 +26,14 @@ describe('trackSteps', () => {
     expect(steps({ status: 'ready' })).toEqual([
       'Ordered:done', 'Being prepared:done', 'In the oven:done', 'Baked:done', 'Ready to collect:-',
     ]);
+  });
+});
+
+describe('pizzaStep', () => {
+  it('says where each pizza is, or that it was picked up', () => {
+    expect(pizzaStep({ name: 'Funghi', stage: 'baking' }, 'in-progress')).toBe('In the oven');
+    expect(pizzaStep({ name: 'Funghi', stage: 'ready' }, 'in-progress')).toBe('Ready to collect');
+    expect(pizzaStep({ name: 'Funghi', stage: 'ready', handed: true }, 'in-progress')).toBe('Picked up');
+    expect(pizzaStep({ name: 'Funghi', stage: null }, 'collected')).toBe('Picked up');
   });
 });
